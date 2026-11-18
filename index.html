@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수학 우주 탐험대</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1026; --panel:rgba(255,255,255,.08); --panel2:rgba(255,255,255,.15);
+    --line:rgba(255,255,255,.18); --text:#f5f7ff; --muted:#aab3d6;
+    --accent:#ffd54f; --accent-d:#b8930f; --ok:#5fe08a; --bad:#ff6b81; --blue:#5ac8fa; --purple:#b388ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    font-family:'Gowun Dodum',sans-serif; color:var(--text);
+    background:radial-gradient(ellipse at top,#1d2c70 0%,#0b1026 55%,#05070f 100%) fixed;
+    background-color:var(--bg); min-height:100vh; overflow-x:hidden;
+  }
+  #bg,#fx{position:fixed;inset:0;pointer-events:none}
+  #bg{z-index:0} #fx{z-index:60}
+  .app{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:16px 16px 48px}
+  h1,h2,h3,.jua,button,select,input{font-family:'Jua',sans-serif;font-weight:400}
+  .screen{display:none;animation:fadeIn .35s ease}
+  .screen.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;margin-bottom:14px;backdrop-filter:blur(6px)}
+  .muted{color:var(--muted)}
+  .center{text-align:center}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .spacer{flex:1}
+
+  .btn{font-size:1.2rem;border:none;border-radius:16px;padding:14px 22px;cursor:pointer;
+       background:var(--accent);color:#2a1e00;box-shadow:0 4px 0 var(--accent-d);transition:transform .08s,box-shadow .08s}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--accent-d)}
+  .btn.ghost{background:var(--panel2);color:var(--text);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+  .btn.small{font-size:1rem;padding:9px 14px;border-radius:12px}
+  .btn.block{width:100%}
+  .btn.danger{background:var(--bad);color:#fff;box-shadow:0 4px 0 #a33}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  /* 상단 바 */
+  .topbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;min-height:44px}
+  .topbar .who{font-family:'Jua';font-size:1.05rem;color:var(--muted)}
+  .db-mode{font-size:.85rem;padding:4px 10px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .db-mode.on{color:var(--ok);border-color:rgba(95,224,138,.5)}
+  .db-error{display:none;margin-bottom:12px;padding:12px 14px;border-radius:14px;background:rgba(255,107,129,.15);border:2px solid var(--bad);line-height:1.5;word-break:break-all}
+  .icon-btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:12px;width:44px;height:44px;font-size:1.3rem;cursor:pointer}
+
+  /* 시작 화면 */
+  .hero{text-align:center;padding:24px 0 8px}
+  .hero .rocket{font-size:5rem;display:inline-block;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-14px) rotate(4deg)}}
+  .hero h1{font-size:2.6rem;margin-top:8px;background:linear-gradient(90deg,#ffd54f,#ff8a65,#b388ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);margin-top:6px;font-size:1.05rem}
+  label.f{display:block;font-family:'Jua';margin:12px 0 6px;font-size:1.1rem}
+  select,input[type=text],input[type=number],input[type=password]{
+    width:100%;font-size:1.2rem;padding:12px 14px;border-radius:14px;border:2px solid var(--line);
+    background:rgba(0,0,0,.35);color:var(--text);outline:none}
+  select:focus,input:focus{border-color:var(--accent)}
+  select option{color:#000}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .notice{font-size:.92rem;color:var(--muted);margin-top:8px;line-height:1.5}
+
+  /* 홈 */
+  .greet{font-size:1.6rem;margin-bottom:4px}
+  .mission{border:2px dashed var(--accent);background:rgba(255,213,79,.08)}
+  .mission h3{color:var(--accent);font-size:1.2rem;margin-bottom:6px}
+  .bar{height:18px;border-radius:10px;background:rgba(0,0,0,.4);overflow:hidden;border:1px solid var(--line)}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#ffd54f,#ff8a65);border-radius:10px;transition:width .8s ease}
+  .bar.blue > i{background:linear-gradient(90deg,#5ac8fa,#b388ff)}
+  .bar.red > i{background:linear-gradient(90deg,#ff8a65,#ff6b81)}
+  .planets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .planet{cursor:pointer;border:none;color:var(--text);text-align:center;padding:18px 10px;border-radius:20px;
+          background:var(--panel);border:2px solid var(--line);transition:transform .15s,border-color .15s;position:relative}
+  .planet:hover{transform:translateY(-4px);border-color:var(--accent)}
+  .planet .em{font-size:3rem;display:block}
+  .planet .pn{font-size:1.3rem;margin-top:4px}
+  .planet .un{font-family:'Gowun Dodum';font-size:.95rem;color:var(--muted)}
+  .planet .best{font-size:.9rem;margin-top:6px;color:var(--accent)}
+  .planet .done{position:absolute;top:8px;right:10px;font-size:1.2rem}
+  .menu2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  /* 퀴즈 */
+  .qhead{display:flex;justify-content:space-between;align-items:center;font-family:'Jua';font-size:1.1rem;margin-bottom:8px;gap:8px;flex-wrap:wrap}
+  .lv{color:var(--accent)}
+  .track{position:relative;height:74px;margin:6px 0 14px;background:var(--panel);border-radius:40px;border:1px solid var(--line)}
+  .track .path{position:absolute;left:6%;right:6%;top:50%;border-top:3px dashed rgba(255,255,255,.25)}
+  .track .pl{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:1.7rem;filter:grayscale(.8) brightness(.7);transition:filter .4s}
+  .track .pl.lit{filter:none}
+  .track .rk{position:absolute;top:50%;font-size:2.2rem;transform:translate(-50%,-50%) rotate(45deg);transition:left .7s cubic-bezier(.5,1.6,.5,1);z-index:2}
+  .track .rk.shake{animation:shake .45s}
+  @keyframes shake{0%,100%{margin-left:0}20%{margin-left:-8px}40%{margin-left:8px}60%{margin-left:-6px}80%{margin-left:6px}}
+  .qcard{text-align:center;padding:26px 16px;position:relative}
+  .qtype{font-size:.95rem;color:var(--muted);margin-bottom:8px}
+  .qtext{font-family:'Jua';font-size:2.4rem;line-height:1.35;word-break:keep-all}
+  .qtext.long{font-size:1.5rem}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .choice{font-size:1.7rem;padding:18px 8px;border-radius:18px;border:2px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;transition:transform .1s}
+  .choice:hover{border-color:var(--blue)}
+  .choice:active{transform:scale(.97)}
+  .choice.right{background:rgba(95,224,138,.3);border-color:var(--ok)}
+  .choice.wrong{background:rgba(255,107,129,.3);border-color:var(--bad)}
+  .choice:disabled{cursor:default}
+  .choice .k{font-size:.85rem;color:var(--muted);margin-right:6px}
+
+  .keypad-wrap{max-width:360px;margin:0 auto}
+  .ans-box{font-family:'Jua';font-size:2.2rem;text-align:center;padding:10px;border-radius:16px;border:3px solid var(--blue);background:rgba(0,0,0,.35);min-height:66px;margin-bottom:10px;letter-spacing:2px}
+  .ans-box.right{border-color:var(--ok)} .ans-box.wrong{border-color:var(--bad)}
+  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .key{font-size:1.6rem;padding:14px 0;border-radius:14px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer}
+  .key:active{transform:scale(.95)}
+  .key.ok{background:var(--accent);color:#2a1e00}
+
+  .feedback{margin-top:14px;padding:16px;border-radius:18px;display:none;text-align:center;font-size:1.1rem;line-height:1.6}
+  .feedback.show{display:block;animation:fadeIn .25s}
+  .feedback.ok{background:rgba(95,224,138,.15);border:2px solid var(--ok)}
+  .feedback.bad{background:rgba(255,107,129,.12);border:2px solid var(--bad)}
+  .feedback b{font-family:'Jua';font-size:1.4rem}
+  .hint{margin-top:6px;color:#ffe9a8}
+  .toast{position:fixed;left:50%;top:22%;transform:translate(-50%,-50%) scale(.6);opacity:0;z-index:70;
+         font-family:'Jua';font-size:2rem;padding:14px 26px;border-radius:20px;background:linear-gradient(90deg,#ff8a65,#ffd54f);color:#3a1a00;pointer-events:none;white-space:nowrap}
+  .toast.go{animation:pop 1.3s ease forwards}
+  @keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-80%) scale(1)}}
+
+  /* 결과 */
+  .big{font-size:4.5rem;text-align:center}
+  .res-title{font-size:2rem;text-align:center}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+  .stat{background:var(--panel2);border-radius:16px;padding:12px 6px;text-align:center}
+  .stat .v{font-family:'Jua';font-size:1.6rem;color:var(--accent)}
+  .stat .l{font-size:.9rem;color:var(--muted)}
+  .compare{text-align:center;font-family:'Jua';font-size:1.25rem;padding:10px;border-radius:14px;background:rgba(90,200,250,.12)}
+  .newbadges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+  .nb{background:rgba(255,213,79,.15);border:2px solid var(--accent);border-radius:16px;padding:8px 14px;font-family:'Jua'}
+  table.rank{width:100%;border-collapse:collapse;font-size:1.05rem}
+  table.rank td,table.rank th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+  table.rank th{font-family:'Jua';color:var(--muted);font-weight:400}
+  table.rank tr.me td{background:rgba(255,213,79,.15)}
+  .medal{font-size:1.2rem}
+
+  /* 배지 도감 */
+  .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  .badge{text-align:center;padding:16px 8px;border-radius:18px;background:var(--panel);border:2px solid var(--line)}
+  .badge .e{font-size:2.6rem}
+  .badge .n{font-family:'Jua';font-size:1.1rem;margin-top:4px}
+  .badge .d{font-size:.85rem;color:var(--muted);margin-top:2px}
+  .badge.locked .e{filter:grayscale(1) brightness(.4)}
+  .badge.locked .n{color:var(--muted)}
+  .badge.got{border-color:var(--accent)}
+
+  /* 교사 */
+  .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .hbar{display:grid;grid-template-columns:150px 1fr 54px;gap:8px;align-items:center;margin:8px 0;font-size:.98rem}
+  .hbar .bar{height:16px}
+  .scroll-x{overflow-x:auto}
+  table.data{width:100%;border-collapse:collapse;font-size:.95rem;min-width:520px}
+  table.data td,table.data th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+  table.data th{font-family:'Jua';font-weight:400;color:var(--muted)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.85rem;background:rgba(255,107,129,.2);color:#ffb3c0}
+
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+  .modal.show{display:flex}
+  .modal .card{max-width:380px;width:100%;background:#1a2252}
+
+  @media (max-width:520px){
+    .hero h1{font-size:2rem}
+    .qtext{font-size:2rem} .qtext.long{font-size:1.25rem}
+    .choice{font-size:1.4rem;padding:16px 6px}
+    .stats{grid-template-columns:repeat(3,1fr)}
+    .tgrid{grid-template-columns:1fr 1fr 1fr}
+    .hbar{grid-template-columns:110px 1fr 46px;font-size:.88rem}
+  }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<canvas id="fx"></canvas>
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <!-- 상단 바 -->
+  <div class="topbar">
+    <button class="icon-btn" id="btnHome" title="홈으로" style="display:none">🏠</button>
+    <span class="who" id="who"></span>
+    <span class="spacer"></span>
+    <span class="db-mode" id="dbMode"></span>
+    <button class="icon-btn" id="btnSound" title="효과음 켜기/끄기">🔊</button>
+  </div>
+  <div class="db-error" id="dbError"></div>
+
+  <!-- ① 시작 화면 -->
+  <section class="screen active" id="s-start">
+    <div class="hero">
+      <div class="rocket">🚀</div>
+      <h1>수학 우주 탐험대</h1>
+      <p>문제를 풀며 로켓을 타고 우주를 탐험해요!</p>
+    </div>
+    <div class="card">
+      <div class="two">
+        <div>
+          <label class="f" for="selClass">반</label>
+          <select id="selClass"></select>
+        </div>
+        <div>
+          <label class="f" for="selNum">번호</label>
+          <select id="selNum"></select>
+        </div>
+      </div>
+      <label class="f" for="inpNick">대원 별명 <span class="muted" style="font-size:.9rem">(선택)</span></label>
+      <input type="text" id="inpNick" maxlength="8" placeholder="예) 별빛대원">
+      <p class="notice">🔒 진짜 이름은 쓰지 마세요! 반과 번호, 별명만 저장돼요.</p>
+      <button class="btn block" id="btnStart" style="margin-top:16px">🚀 출발!</button>
+    </div>
+    <div class="center"><button class="btn ghost small" id="btnTeacher">🧑‍🏫 선생님 화면</button></div>
+  </section>
+
+  <!-- ② 홈 (행성 선택) -->
+  <section class="screen" id="s-home">
+    <h2 class="greet" id="greet"></h2>
+    <p class="muted" style="margin-bottom:14px">탐험할 행성을 골라 보세요.</p>
+
+    <div class="card mission" id="missionCard" style="display:none"></div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <h3>🤝 우리 반 별 모으기</h3><span class="spacer"></span>
+        <span class="jua" id="coopText"></span>
+      </div>
+      <div class="bar"><i id="coopBar" style="width:0%"></i></div>
+      <p class="notice" id="coopMsg"></p>
+    </div>
+
+    <div class="planets" id="planets"></div>
+
+    <div class="menu2" style="margin-top:14px">
+      <button class="btn ghost" id="btnReview">📖 오답 노트</button>
+      <button class="btn ghost" id="btnBadges">🎖️ 배지 도감</button>
+    </div>
+    <div class="center" style="margin-top:14px">
+      <button class="btn ghost small" id="btnLogout">👋 다른 대원으로 바꾸기</button>
+    </div>
+  </section>
+
+  <!-- ③ 퀴즈 -->
+  <section class="screen" id="s-quiz">
+    <div class="qhead">
+      <span id="qCount">문제 1 / 10</span>
+      <span class="lv" id="qLevel"></span>
+      <span id="qScore">⭐ 0점</span>
+    </div>
+    <div class="track" id="track">
+      <div class="path"></div>
+      <span class="rk" id="rocket">🚀</span>
+    </div>
+    <div class="card qcard">
+      <div class="qtype" id="qType"></div>
+      <div class="qtext" id="qText"></div>
+    </div>
+    <div id="answerArea"></div>
+    <div class="feedback" id="feedback"></div>
+  </section>
+
+  <!-- ④ 결과 -->
+  <section class="screen" id="s-result">
+    <div class="card">
+      <div class="big" id="rEmoji">🎉</div>
+      <h2 class="res-title" id="rTitle"></h2>
+      <p class="center muted" id="rSub"></p>
+      <div class="stats">
+        <div class="stat"><div class="v" id="rScore">0</div><div class="l">점수</div></div>
+        <div class="stat"><div class="v" id="rCorrect">0</div><div class="l">맞힌 문제</div></div>
+        <div class="stat"><div class="v" id="rTime">0</div><div class="l">걸린 시간</div></div>
+      </div>
+      <div class="compare" id="rCompare"></div>
+      <div id="rBadges"></div>
+      <div id="rMission"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <h3>🤝 우리 반 별 모으기</h3><span class="spacer"></span><span class="jua" id="rCoopText"></span>
+      </div>
+      <div class="bar"><i id="rCoopBar" style="width:0%"></i></div>
+    </div>
+
+    <div class="card" id="rRankCard">
+      <h3 style="margin-bottom:8px" id="rRankTitle">🏆 명예의 전당</h3>
+      <table class="rank"><thead><tr><th>순위</th><th>대원</th><th>점수</th><th>시간</th></tr></thead><tbody id="rRank"></tbody></table>
+    </div>
+
+    <div class="menu2">
+      <button class="btn" id="btnRetry">🔁 다시 도전</button>
+      <button class="btn ghost" id="btnToHome">🪐 다른 행성</button>
+    </div>
+  </section>
+
+  <!-- 배지 도감 -->
+  <section class="screen" id="s-badges">
+    <h2 style="margin-bottom:4px">🎖️ 배지 도감</h2>
+    <p class="muted" id="badgeCount" style="margin-bottom:14px"></p>
+    <div class="badges" id="badgeList"></div>
+    <button class="btn ghost block" style="margin-top:16px" data-go="home">← 돌아가기</button>
+  </section>
+
+  <!-- 교사 화면 -->
+  <section class="screen" id="s-teacher">
+    <div class="row" style="margin-bottom:12px">
+      <h2>🧑‍🏫 선생님 화면</h2><span class="spacer"></span>
+      <select id="tClass" style="width:auto"></select>
+    </div>
+
+    <div class="tgrid">
+      <div class="stat"><div class="v" id="tStudents">0</div><div class="l">참여 학생</div></div>
+      <div class="stat"><div class="v" id="tPlays">0</div><div class="l">탐험 횟수</div></div>
+      <div class="stat"><div class="v" id="tAcc">0%</div><div class="l">평균 정답률</div></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3 style="margin-bottom:6px">📊 단원별 정답률</h3>
+      <div id="tUnits"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:2px">🚨 많이 틀린 문제 유형</h3>
+      <p class="notice" style="margin-bottom:6px">오답률이 높은 순서예요. 3번 이상 풀린 유형만 보여요. 다음 시간 보충 지도에 활용하세요.</p>
+      <div id="tSkills"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:8px">👩‍🚀 학생별 현황</h3>
+      <div class="scroll-x">
+        <table class="data"><thead><tr><th>번호</th><th>별명</th><th>탐험</th><th>정답률</th><th>최고점</th><th>약한 유형</th></tr></thead><tbody id="tStudentRows"></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:6px">🎯 오늘의 미션 · 협동 목표 설정</h3>
+      <div class="two">
+        <div><label class="f" for="tMUnit">미션 행성</label><select id="tMUnit"></select></div>
+        <div><label class="f" for="tMCount">탐험 횟수</label><input type="number" id="tMCount" min="1" max="10" value="2"></div>
+      </div>
+      <label class="f" for="tGoal">우리 반 별 목표 (개)</label>
+      <input type="number" id="tGoal" min="10" step="10" value="300">
+      <button class="btn block" id="btnSaveSettings" style="margin-top:14px">💾 설정 저장</button>
+      <p class="notice" id="tSaved"></p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:6px">⚙️ 관리</h3>
+      <div id="tFbAdmin" class="notice" style="display:none;font-size:1rem">
+        🔒 보안을 위해 <b>비밀번호 변경</b>과 <b>기록 삭제</b>는 Firebase 콘솔에서만 할 수 있어요.<br>
+        · 비밀번호: Firestore Database → <code>settings</code> 컬렉션 → <code>teacher</code> 문서의 <code>pin</code> 값 수정<br>
+        · 기록 삭제: Firestore Database → <code>results</code> / <code>students</code> 컬렉션에서 문서 삭제
+      </div>
+      <div id="tLocalAdmin">
+      <label class="f" for="tPin">선생님 비밀번호 바꾸기 (숫자 4자리)</label>
+      <div class="row"><input type="password" id="tPin" maxlength="4" inputmode="numeric" style="flex:1"><button class="btn small" id="btnPin">변경</button></div>
+      <p class="notice">※ 학생이 실수로 들어오지 않게 막는 장치예요. 실제 데이터 보안은 4단계(DB 보안)에서 적용해요.</p>
+      <button class="btn danger block" id="btnReset" style="margin-top:14px">🗑️ 이 반 기록 모두 지우기</button>
+      </div>
+    </div>
+
+    <button class="btn ghost block" id="btnTeacherExit">← 처음 화면으로</button>
+  </section>
+</div>
+
+<!-- 비밀번호 창 -->
+<div class="modal" id="pinModal">
+  <div class="card">
+    <h3 style="margin-bottom:8px">🔑 선생님 비밀번호</h3>
+    <input type="password" id="pinInput" maxlength="4" inputmode="numeric" placeholder="숫자 4자리">
+    <p class="notice">처음 비밀번호는 <b>1234</b>예요. 들어가서 꼭 바꿔 주세요.</p>
+    <p class="notice" id="pinErr" style="color:var(--bad)"></p>
+    <div class="menu2" style="margin-top:10px">
+      <button class="btn ghost" id="pinCancel">취소</button>
+      <button class="btn" id="pinOk">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   수학 우주 탐험대 — 초등 3학년 수학 퀴즈
+   ========================================================= */
+
+// ---------- 도우미 함수 ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pickOne = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const fmtSec = s => s >= 60 ? `${Math.floor(s/60)}분 ${s%60}초` : `${s}초`;
+
+/* =========================================================
+   [Firebase 설정] ★ Firebase 콘솔에서 복사한 값을 여기에 붙여 넣으세요.
+   - 값이 비어 있으면 브라우저(localStorage)에만 저장됩니다.
+   - 이 값은 웹앱에 원래 공개되는 값이에요. 대신 4단계에서
+     API 키 HTTP 리퍼러 제한 + Firestore 보안 규칙으로 보호합니다.
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCkozmzSm2dsMtzacI1_2FiKx79QF0qiqQ",
+  authDomain: "math-space-quiz.firebaseapp.com",
+  projectId: "math-space-quiz",
+  storageBucket: "math-space-quiz.firebasestorage.app",
+  messagingSenderId: "391431178970",
+  appId: "1:391431178970:web:04eed28f0169e43a73f3e3"
+};
+const FIREBASE_VERSION = '10.12.2';
+const USE_FIREBASE = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
+
+/* =========================================================
+   [저장소 1] 브라우저(localStorage) 저장 — Firebase 설정 전 임시용
+   ========================================================= */
+const LocalDB = {
+  _get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } },
+  _set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+
+  // 탐험 기록
+  async addResult(r) { const a = this._get('msq_results', []); a.push(r); this._set('msq_results', a); },
+  async getResults(cls) { return this._get('msq_results', []).filter(r => cls == null || r.cls === cls); },
+
+  // 학생 정보 (배지, 최고 기록, 오답 노트)
+  async getStudent(id) { return this._get('msq_students', {})[id] || null; },
+  async saveStudent(s) { const all = this._get('msq_students', {}); all[s.id] = s; this._set('msq_students', all); },
+  async getStudents(cls) { return Object.values(this._get('msq_students', {})).filter(s => s.cls === cls); },
+
+  // 반 설정 (협동 목표, 오늘의 미션)
+  async getClassSettings(cls) { return { goal: 300, mission: null, ...(this._get('msq_class', {})[cls] || {}) }; },
+  async saveClassSettings(cls, v) { const all = this._get('msq_class', {}); all[cls] = v; this._set('msq_class', all); },
+
+  // 선생님 비밀번호
+  async getPin() { return this._get('msq_pin', '1234'); },
+  async setPin(p) { this._set('msq_pin', p); },
+
+  // 반 기록 초기화
+  async resetClass(cls) {
+    this._set('msq_results', this._get('msq_results', []).filter(r => r.cls !== cls));
+    const st = this._get('msq_students', {}); for (const k in st) if (st[k].cls === cls) delete st[k]; this._set('msq_students', st);
+  }
+};
+
+/* =========================================================
+   [저장소 2] Firebase Firestore 저장 — 3단계
+   컬렉션 구조
+     results/{자동ID}    탐험 기록 1건씩
+     students/{3-반-번호} 배지, 최고 기록, 오답 노트
+     classes/{반}        협동 목표, 오늘의 미션
+     settings/teacher    선생님 비밀번호
+   ========================================================= */
+let fsPromise = null;
+function fsReady() {
+  if (!fsPromise) fsPromise = (async () => {
+    const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+    const appMod = await import(`${base}/firebase-app.js`);
+    const m = await import(`${base}/firebase-firestore.js`);
+    const app = appMod.initializeApp(firebaseConfig);
+    const db = m.initializeFirestore(app, { ignoreUndefinedProperties: true });
+    return { db, m };
+  })();
+  return fsPromise;
+}
+const FirebaseDB = {
+  async addResult(r) {
+    const { db, m } = await fsReady();
+    await m.addDoc(m.collection(db, 'results'), r);
+  },
+  async getResults(cls) {
+    const { db, m } = await fsReady();
+    const col = m.collection(db, 'results');
+    const snap = await m.getDocs(cls == null ? col : m.query(col, m.where('cls', '==', cls)));
+    return snap.docs.map(d => d.data());
+  },
+  async getStudent(id) {
+    const { db, m } = await fsReady();
+    const s = await m.getDoc(m.doc(db, 'students', id));
+    return s.exists() ? s.data() : null;
+  },
+  async saveStudent(st) {
+    const { db, m } = await fsReady();
+    await m.setDoc(m.doc(db, 'students', st.id), st);
+  },
+  async getStudents(cls) {
+    const { db, m } = await fsReady();
+    const snap = await m.getDocs(m.query(m.collection(db, 'students'), m.where('cls', '==', cls)));
+    return snap.docs.map(d => d.data());
+  },
+  async getClassSettings(cls) {
+    const { db, m } = await fsReady();
+    const s = await m.getDoc(m.doc(db, 'classes', String(cls)));
+    return { goal: 300, mission: null, ...(s.exists() ? s.data() : {}) };
+  },
+  async saveClassSettings(cls, v) {
+    const { db, m } = await fsReady();
+    await m.setDoc(m.doc(db, 'classes', String(cls)), v);
+  },
+  async getPin() {
+    const { db, m } = await fsReady();
+    const s = await m.getDoc(m.doc(db, 'settings', 'teacher'));
+    return (s.exists() && s.data().pin) || '1234';
+  },
+  async setPin(p) {
+    const { db, m } = await fsReady();
+    await m.setDoc(m.doc(db, 'settings', 'teacher'), { pin: p });
+  },
+  async resetClass(cls) {
+    const { db, m } = await fsReady();
+    const refs = [];
+    for (const name of ['results', 'students']) {
+      const snap = await m.getDocs(m.query(m.collection(db, name), m.where('cls', '==', cls)));
+      snap.forEach(d => refs.push(d.ref));
+    }
+    for (let i = 0; i < refs.length; i += 400) {   // 한 번에 최대 500개까지 지울 수 있어요
+      const batch = m.writeBatch(db);
+      refs.slice(i, i + 400).forEach(r => batch.delete(r));
+      await batch.commit();
+    }
+  }
+};
+
+// ★ 설정값이 있으면 Firebase, 없으면 브라우저 저장소를 사용
+const DB = USE_FIREBASE ? FirebaseDB : LocalDB;
+
+// 저장소 오류를 화면에 알려 주기 (보안 설정·인터넷 문제를 빨리 찾기 위해)
+function showDbError(err) {
+  const box = document.getElementById('dbError');
+  if (!box) return;
+  const msg = String(err && (err.code || err.message) || err);
+  let tip = '인터넷 연결을 확인해 주세요.';
+  if (/permission/i.test(msg)) tip = 'Firestore 보안 규칙이 막고 있어요. (4단계 규칙을 확인하세요)';
+  else if (/referer|api-key|API key|blocked/i.test(msg)) tip = 'API 키 리퍼러 제한에 이 주소가 없어요. (허용 목록에 추가하세요)';
+  box.innerHTML = `⚠️ 기록 저장소 연결 오류: ${esc(msg)}<br><small>${tip}</small>`;
+  box.style.display = 'block';
+}
+addEventListener('unhandledrejection', e => { console.error(e.reason); showDbError(e.reason); });
+
+// ---------- 단원·문제 유형 ----------
+const UNITS = {
+  add:  { planet: '지구', emoji: '🌍', name: '덧셈과 뺄셈' },
+  div:  { planet: '달',   emoji: '🌙', name: '나눗셈' },
+  mul:  { planet: '화성', emoji: '🔴', name: '곱셈' },
+  time: { planet: '토성', emoji: '🪐', name: '시간 계산' },
+  mix:  { planet: '은하', emoji: '🌌', name: '섞어서 도전!' },
+};
+const SKILLS = {
+  add_nocarry:  { unit: 'add',  label: '받아올림 없는 덧셈',   hint: '같은 자리 숫자끼리 더해요. 일의 자리부터 차례로!' },
+  add_carry:    { unit: 'add',  label: '받아올림 있는 덧셈',   hint: '자리의 합이 10 이상이면 바로 윗자리로 1을 올려 줘요.' },
+  sub_noborrow: { unit: 'add',  label: '받아내림 없는 뺄셈',   hint: '같은 자리 숫자끼리 빼요.' },
+  sub_borrow:   { unit: 'add',  label: '받아내림 있는 뺄셈',   hint: '뺄 수 없으면 윗자리에서 10을 빌려 와요. 빌려준 자리는 1 작아져요!' },
+  div_basic:    { unit: 'div',  label: '곱셈구구로 나눗셈',    hint: '÷ 뒤의 수의 단 곱셈구구를 떠올려요. 예) 24÷6 → 6×4=24 → 몫은 4' },
+  div_missing:  { unit: 'div',  label: '□ 구하기',            hint: '□×4=28 이면 28÷4를 계산하면 □를 구할 수 있어요.' },
+  div_word:     { unit: 'div',  label: '나눗셈 문장제',        hint: '"똑같이 나누면", "~씩 담으면"은 나눗셈으로 풀어요.' },
+  mul_nocarry:  { unit: 'mul',  label: '올림 없는 (두 자리)×(한 자리)', hint: '일의 자리, 십의 자리를 각각 곱해서 더해요.' },
+  mul_carry:    { unit: 'mul',  label: '올림 있는 (두 자리)×(한 자리)', hint: '일의 자리 곱이 10 이상이면 십의 자리로 올려서 더해 줘요.' },
+  mul_3digit:   { unit: 'mul',  label: '(세 자리)×(한 자리)',  hint: '백, 십, 일의 자리를 각각 곱한 뒤 모두 더해요.' },
+  time_convert: { unit: 'time', label: '시간 ↔ 분 바꾸기',     hint: '1시간 = 60분! 시간에 60을 곱하고 남은 분을 더해요.' },
+  time_add:     { unit: 'time', label: '시간의 덧셈',          hint: '분끼리 더해서 60분이 넘으면 60분을 1시간으로 바꿔요.' },
+  time_sub:     { unit: 'time', label: '시간의 뺄셈',          hint: '분끼리 뺄 수 없으면 1시간을 60분으로 바꿔서 빼요.' },
+};
+// 난이도(1~3)별로 나오는 유형
+const LEVELS = {
+  add:  [['add_nocarry','sub_noborrow'], ['add_carry','sub_borrow'], ['add_carry','sub_borrow']],
+  div:  [['div_basic'], ['div_basic','div_missing'], ['div_missing','div_word']],
+  mul:  [['mul_nocarry'], ['mul_carry'], ['mul_carry','mul_3digit']],
+  time: [['time_convert'], ['time_convert','time_add'], ['time_add','time_sub']],
+};
+
+// ---------- 계산 실수 흉내 (그럴듯한 오답 보기용) ----------
+function carries(a, b) { let c = 0, k = 0; while (a > 0 || b > 0) { const s = a%10 + b%10 + k; k = s >= 10 ? 1 : 0; c += k; a = Math.floor(a/10); b = Math.floor(b/10); } return c; }
+function borrows(a, b) { let c = 0, k = 0; while (a > 0 || b > 0) { const d = a%10 - k - b%10; k = d < 0 ? 1 : 0; c += k; a = Math.floor(a/10); b = Math.floor(b/10); } return c; }
+function noCarryAdd(a, b) { let r = 0, p = 1; while (a || b) { r += ((a%10 + b%10) % 10) * p; a = Math.floor(a/10); b = Math.floor(b/10); p *= 10; } return r; }
+function absDigitSub(a, b) { let r = 0, p = 1; while (a || b) { r += Math.abs(a%10 - b%10) * p; a = Math.floor(a/10); b = Math.floor(b/10); p *= 10; } return r; }
+function noCarryMul(a, m) { let r = 0, p = 1; while (a) { r += (((a%10) * m) % 10) * p; a = Math.floor(a/10); p *= 10; } return r; }
+function sample(gen, ok) { for (let i = 0; i < 600; i++) { const v = gen(); if (ok(v)) return v; } return gen(); }
+const fmtMin = t => { const h = Math.floor(t/60), m = t % 60; return h === 0 ? `${m}분` : m === 0 ? `${h}시간` : `${h}시간 ${m}분`; };
+
+function numChoices(ans, mistakes = []) {
+  const used = new Set([ans]), out = [];
+  for (const m of mistakes) { if (out.length === 3) break; if (m > 0 && !used.has(m)) { used.add(m); out.push(m); } }
+  for (const d of shuffle([1,-1,10,-10,2,-2,100,-100,5])) { if (out.length === 3) break; const v = ans + d; if (v > 0 && !used.has(v)) { used.add(v); out.push(v); } }
+  return shuffle([ans, ...out]);
+}
+function strChoices(ans, cands) {
+  const used = new Set([ans]), out = [];
+  for (const c of cands) { if (out.length === 3) break; if (c && !used.has(c)) { used.add(c); out.push(c); } }
+  return shuffle([ans, ...out]);
+}
+
+// ---------- 문제 만들기 ----------
+const GEN = {
+  add_nocarry() {
+    const [a, b] = sample(() => [rand(100, 799), rand(100, 799)], ([a, b]) => a + b < 1000 && carries(a, b) === 0);
+    const ans = a + b;
+    return { text: `${a} + ${b} = ?`, answer: ans, numeric: true, mistakes: [ans + 10, ans - 10, ans + 100], explain: `${a} + ${b} = ${ans}` };
+  },
+  add_carry(lv) {
+    const need = lv >= 3 ? 2 : 1;
+    const [a, b] = sample(() => [rand(100, 799), rand(100, 799)], ([a, b]) => a + b < 1000 && carries(a, b) === need);
+    const ans = a + b;
+    return { text: `${a} + ${b} = ?`, answer: ans, numeric: true, mistakes: [noCarryAdd(a, b), ans - 10, ans + 10], explain: `${a} + ${b} = ${ans}` };
+  },
+  sub_noborrow() {
+    const [a, b] = sample(() => { const a = rand(300, 999); return [a, rand(100, a - 50)]; }, ([a, b]) => borrows(a, b) === 0);
+    const ans = a - b;
+    return { text: `${a} − ${b} = ?`, answer: ans, numeric: true, mistakes: [ans + 10, ans - 10, ans + 100], explain: `${a} − ${b} = ${ans}` };
+  },
+  sub_borrow(lv) {
+    const need = lv >= 3 ? 2 : 1;
+    const [a, b] = sample(() => { const a = rand(300, 999); return [a, rand(100, a - 50)]; }, ([a, b]) => borrows(a, b) === need);
+    const ans = a - b;
+    return { text: `${a} − ${b} = ?`, answer: ans, numeric: true, mistakes: [absDigitSub(a, b), ans + 10, ans - 10], explain: `${a} − ${b} = ${ans}` };
+  },
+  div_basic(lv) {
+    const b = lv === 1 ? rand(2, 5) : rand(2, 9), q = rand(2, 9), a = b * q;
+    return { text: `${a} ÷ ${b} = ?`, answer: q, numeric: true, mistakes: [q + 1, q - 1, b], explain: `${b} × ${q} = ${a} 이므로 ${a} ÷ ${b} = ${q}` };
+  },
+  div_missing() {
+    const b = rand(2, 9), q = rand(2, 9), a = b * q;
+    return { text: `□ × ${b} = ${a}`, answer: q, numeric: true, mistakes: [q + 1, q - 1, a - b], explain: `${a} ÷ ${b} = ${q} 이므로 □ = ${q}` };
+  },
+  div_word() {
+    const b = rand(2, 9), q = rand(2, 9), a = b * q;
+    const t = pickOne([
+      `사탕 ${a}개를 ${b}명이 똑같이 나누어 가지면 한 명이 몇 개씩 가질까요?`,
+      `구슬 ${a}개를 한 봉지에 ${b}개씩 담으면 몇 봉지가 될까요?`,
+      `색종이 ${a}장을 ${b}모둠에 똑같이 나누어 주면 한 모둠에 몇 장일까요?`,
+      `연필 ${a}자루를 ${b}자루씩 묶으면 몇 묶음이 될까요?`,
+    ]);
+    return { text: t, answer: q, numeric: true, long: true, mistakes: [q + 1, q - 1, a - b], explain: `${a} ÷ ${b} = ${q}` };
+  },
+  mul_nocarry() {
+    const [a, m] = sample(() => [rand(11, 44), rand(2, 3)], ([a, m]) => (a % 10) * m < 10 && Math.floor(a / 10) * m < 10 && a % 10 > 0);
+    const ans = a * m;
+    return { text: `${a} × ${m} = ?`, answer: ans, numeric: true, mistakes: [ans + 10, ans - 10, a + m], explain: `${a} × ${m} = ${ans}` };
+  },
+  mul_carry() {
+    const [a, m] = sample(() => [rand(13, 49), rand(3, 9)], ([a, m]) => (a % 10) * m >= 10 && a * m < 1000);
+    const ans = a * m;
+    return { text: `${a} × ${m} = ?`, answer: ans, numeric: true, mistakes: [noCarryMul(a, m), ans - 10, ans + 10], explain: `${a} × ${m} = ${ans}` };
+  },
+  mul_3digit() {
+    const a = rand(102, 329), m = rand(2, 3), ans = a * m;
+    return { text: `${a} × ${m} = ?`, answer: ans, numeric: true, mistakes: [noCarryMul(a, m), ans + 100, ans - 10], explain: `${a} × ${m} = ${ans}` };
+  },
+  time_convert() {
+    if (Math.random() < 0.5) {
+      const h = rand(1, 3), m = rand(1, 5) * 10, ans = h * 60 + m;
+      return { text: `${h}시간 ${m}분은 몇 분일까요?`, answer: ans, numeric: true, long: true, mistakes: [h * 100 + m, ans + 10, ans - 10], explain: `${h}시간 = ${h * 60}분, ${h * 60} + ${m} = ${ans}분` };
+    }
+    const t = rand(13, 40) * 5; const ans = fmtMin(t);
+    return { text: `${t}분은 몇 시간 몇 분일까요?`, answer: ans, numeric: false, long: true,
+      choices: strChoices(ans, [`${Math.floor(t / 100)}시간 ${t % 100}분`, fmtMin(t + 10), fmtMin(t - 10), fmtMin(t + 60), fmtMin(t - 5)]),
+      explain: `${t}분 = 60분 × ${Math.floor(t / 60)} + ${t % 60}분 = ${ans}` };
+  },
+  time_add() {
+    const [h1, m1, h2, m2] = sample(() => [rand(1, 3), rand(2, 5) * 10, rand(0, 2), rand(2, 5) * 10], ([, m1, , m2]) => m1 + m2 >= 60);
+    const t = h1 * 60 + m1 + h2 * 60 + m2, ans = fmtMin(t);
+    const left = fmtMin(h1 * 60 + m1), right = fmtMin(h2 * 60 + m2);
+    return { text: `${left} + ${right} = ?`, answer: ans, numeric: false, long: true,
+      choices: strChoices(ans, [`${h1 + h2}시간 ${m1 + m2}분`, fmtMin(t - 60), fmtMin(t + 10), fmtMin(t - 10)]),
+      explain: `${m1}분 + ${m2}분 = ${m1 + m2}분 = ${fmtMin(m1 + m2)} → 모두 ${ans}` };
+  },
+  time_sub() {
+    const [h1, m1, h2, m2] = sample(() => [rand(2, 5), rand(0, 3) * 10, rand(1, 3), rand(2, 5) * 10], ([h1, m1, h2, m2]) => h2 < h1 && m2 > m1);
+    const t = (h1 * 60 + m1) - (h2 * 60 + m2), ans = fmtMin(t);
+    return { text: `${fmtMin(h1 * 60 + m1)} − ${fmtMin(h2 * 60 + m2)} = ?`, answer: ans, numeric: false, long: true,
+      choices: strChoices(ans, [`${h1 - h2}시간 ${m2 - m1}분`, fmtMin(t + 60), fmtMin(t + 10), fmtMin(t - 10)]),
+      explain: `1시간을 60분으로 바꿔서 빼면 ${ans}` };
+  },
+};
+
+function makeQuestion(unit, level, used) {
+  for (let i = 0; i < 40; i++) {
+    const u = unit === 'mix' ? pickOne(['add', 'div', 'mul', 'time']) : unit;
+    const skill = pickOne(LEVELS[u][level - 1]);
+    const q = GEN[skill](level);
+    q.skill = skill;
+    if (used.has(q.text) && i < 39) continue;
+    used.add(q.text);
+    if (q.numeric) q.choices = numChoices(q.answer, q.mistakes);
+    delete q.mistakes;
+    return q;
+  }
+}
+
+// ---------- 배지·칭호 ----------
+const BADGES = [
+  { id: 'first',   e: '🚀', n: '첫 발사',        d: '첫 탐험을 마쳤어요' },
+  { id: 'add',     e: '🌍', n: '지구 수호자',    d: '지구 행성에서 7문제 이상 정답' },
+  { id: 'div',     e: '🌙', n: '달 탐험가',      d: '달 행성에서 7문제 이상 정답' },
+  { id: 'mul',     e: '🔴', n: '화성 개척자',    d: '화성 행성에서 7문제 이상 정답' },
+  { id: 'time',    e: '🪐', n: '토성 시간여행자', d: '토성 행성에서 7문제 이상 정답' },
+  { id: 'mix',     e: '🌌', n: '은하 정복자',    d: '은하 행성에서 7문제 이상 정답' },
+  { id: 'combo5',  e: '🔥', n: '불꽃 콤보',      d: '5문제 연속 정답' },
+  { id: 'perfect', e: '💯', n: '완벽한 비행',    d: '10문제 모두 정답' },
+  { id: 'hard',    e: '⚡', n: '최고 난이도',    d: '난이도 3단계에 도달했어요' },
+  { id: 'review',  e: '📖', n: '오답 정복자',    d: '오답 노트 문제를 다시 맞혔어요' },
+  { id: 'mission', e: '🎯', n: '미션 완료',      d: '오늘의 미션을 달성했어요' },
+];
+function rankTitle(score) {
+  if (score >= 110) return { e: '👑', t: '은하 영웅' };
+  if (score >= 80)  return { e: '🧑‍✈️', t: '우주 함장' };
+  if (score >= 50)  return { e: '👩‍🚀', t: '우주 비행사' };
+  return { e: '🧒', t: '견습 대원' };
+}
+
+// ---------- 효과음 ----------
+let soundOn = (() => { try { return localStorage.getItem('msq_sound') !== 'off'; } catch { return true; } })();
+let actx;
+function tone(freqs, dur = 0.12, type = 'sine', vol = 0.15) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = actx.currentTime;
+    freqs.forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(vol, t0 + i * dur);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + i * dur + dur);
+      o.connect(g).connect(actx.destination);
+      o.start(t0 + i * dur); o.stop(t0 + i * dur + dur);
+    });
+  } catch {}
+}
+const SFX = {
+  ok:    () => tone([660, 990], 0.1),
+  bad:   () => tone([240, 180], 0.16, 'triangle', 0.2),
+  combo: () => tone([523, 659, 784, 1047], 0.07),
+  up:    () => tone([392, 523, 659], 0.09, 'square', 0.06),
+  win:   () => tone([523, 659, 784, 1047, 1319], 0.13),
+  tap:   () => tone([880], 0.04, 'sine', 0.05),
+};
+function renderSound() { $('#btnSound').textContent = soundOn ? '🔊' : '🔇'; }
+
+// ---------- 배경 별·폭죽 ----------
+const bg = $('#bg'), fx = $('#fx'), bctx = bg.getContext('2d'), fctx = fx.getContext('2d');
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+function sizeCanvas() {
+  [bg, fx].forEach(c => { c.width = innerWidth * dpr; c.height = innerHeight * dpr; c.style.width = innerWidth + 'px'; c.style.height = innerHeight + 'px'; });
+  bctx.clearRect(0, 0, bg.width, bg.height);
+  for (let i = 0; i < 160; i++) {
+    bctx.globalAlpha = Math.random() * 0.8 + 0.2; bctx.fillStyle = '#fff';
+    bctx.beginPath(); bctx.arc(Math.random() * bg.width, Math.random() * bg.height, (Math.random() * 1.4 + 0.3) * dpr, 0, 7); bctx.fill();
+  }
+}
+let parts = [], fxRunning = false;
+function burst(x, y) {
+  const col = pickOne(['#ffd54f', '#ff8a65', '#5ac8fa', '#b388ff', '#5fe08a', '#ff6b81']);
+  for (let i = 0; i < 55; i++) { const a = Math.random() * Math.PI * 2, s = (Math.random() * 4 + 2) * dpr; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 60 + rand(0, 30), col }); }
+  if (!fxRunning) { fxRunning = true; requestAnimationFrame(fxTick); }
+}
+function fxTick() {
+  fctx.clearRect(0, 0, fx.width, fx.height);
+  for (const p of parts) {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.07 * dpr; p.vx *= 0.98; p.life--;
+    fctx.globalAlpha = Math.max(p.life / 90, 0); fctx.fillStyle = p.col;
+    fctx.beginPath(); fctx.arc(p.x, p.y, 3 * dpr, 0, 7); fctx.fill();
+  }
+  parts = parts.filter(p => p.life > 0);
+  if (parts.length) requestAnimationFrame(fxTick); else { fxRunning = false; fctx.clearRect(0, 0, fx.width, fx.height); }
+}
+function fireworks(n = 6) { for (let i = 0; i < n; i++) setTimeout(() => burst(rand(0.15 * fx.width, 0.85 * fx.width) | 0, rand(0.15 * fx.height, 0.5 * fx.height) | 0), i * 280); }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.remove('go'); void t.offsetWidth; t.classList.add('go'); }
+
+// ---------- 화면 전환 ----------
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 's-' + id));
+  $('#btnHome').style.display = (id === 'start' || id === 'home' || id === 'teacher') ? 'none' : '';
+  window.scrollTo({ top: 0 });
+}
+
+// ---------- 상태 ----------
+let me = null;          // 현재 학생 정보
+let Q = null;           // 진행 중인 탐험
+const N_QUESTIONS = 10;
+const studentLabel = s => s.nick ? `${s.num}번 ${esc(s.nick)}` : `${s.num}번 대원`;
+
+/* ===================== ① 시작 ===================== */
+function fillSelect(sel, from, to, suffix, value) {
+  sel.innerHTML = '';
+  for (let i = from; i <= to; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + suffix; sel.appendChild(o); }
+  if (value) sel.value = value;
+}
+function initStart() {
+  let last = {}; try { last = JSON.parse(localStorage.getItem('msq_last')) || {}; } catch {}
+  fillSelect($('#selClass'), 1, 10, '반', last.cls);
+  fillSelect($('#selNum'), 1, 30, '번', last.num);
+  $('#inpNick').value = last.nick || '';
+}
+$('#btnStart').onclick = async () => {
+  SFX.tap();
+  const cls = +$('#selClass').value, num = +$('#selNum').value, nick = $('#inpNick').value.trim().slice(0, 8);
+  const id = `3-${cls}-${num}`;
+  me = (await DB.getStudent(id)) || { id, grade: 3, cls, num, nick: '', badges: [], best: {}, wrongNote: [], plays: 0 };
+  if (nick) me.nick = nick;
+  await DB.saveStudent(me);
+  try { localStorage.setItem('msq_last', JSON.stringify({ cls, num, nick: me.nick })); } catch {}
+  goHome();
+};
+
+/* ===================== ② 홈 ===================== */
+async function goHome() {
+  if (!me) return show('start');
+  me = (await DB.getStudent(me.id)) || me;
+  $('#who').innerHTML = `3학년 ${me.cls}반 · ${studentLabel(me)}`;
+  $('#greet').innerHTML = `안녕, ${me.nick ? esc(me.nick) : me.num + '번'} 대원! 👋`;
+
+  const [set, results] = await Promise.all([DB.getClassSettings(me.cls), DB.getResults(me.cls)]);
+
+  // 오늘의 미션
+  const mc = $('#missionCard');
+  if (set.mission && set.mission.date === today() && UNITS[set.mission.unit]) {
+    const u = UNITS[set.mission.unit];
+    const done = results.filter(r => r.id === me.id && r.unit === set.mission.unit && r.date === today()).length;
+    const pct = Math.min(100, Math.round(done / set.mission.count * 100));
+    mc.innerHTML = `<h3>🎯 오늘의 미션</h3>
+      <p style="font-size:1.1rem">${u.emoji} <b>${u.planet} 행성(${u.name})</b>을 <b>${set.mission.count}번</b> 탐험하기</p>
+      <div class="row" style="margin-top:8px"><div class="bar" style="flex:1"><i style="width:${pct}%"></i></div><span class="jua">${Math.min(done, set.mission.count)} / ${set.mission.count}</span></div>
+      ${done >= set.mission.count ? '<p class="notice" style="color:var(--ok)">✅ 미션 완료! 멋져요!</p>' : ''}`;
+    mc.style.display = '';
+  } else mc.style.display = 'none';
+
+  // 협동 별
+  renderCoop(results, set.goal, '#coopBar', '#coopText', '#coopMsg');
+
+  // 행성 버튼
+  const myBadges = new Set(me.badges);
+  $('#planets').innerHTML = Object.entries(UNITS).map(([k, u]) => `
+    <button class="planet" data-unit="${k}">
+      ${myBadges.has(k) ? '<span class="done">🏅</span>' : ''}
+      <span class="em">${u.emoji}</span>
+      <div class="pn">${u.planet}</div>
+      <div class="un">${u.name}</div>
+      <div class="best">${me.best[k] != null ? '최고 ' + me.best[k] + '점' : '첫 탐험!'}</div>
+    </button>`).join('');
+  document.querySelectorAll('.planet').forEach(b => b.onclick = () => { SFX.tap(); startQuiz(b.dataset.unit, 'normal'); });
+
+  $('#btnReview').textContent = `📖 오답 노트 (${me.wrongNote.length})`;
+  $('#btnReview').disabled = me.wrongNote.length === 0;
+  $('#btnBadges').textContent = `🎖️ 배지 도감 (${me.badges.length}/${BADGES.length})`;
+  show('home');
+}
+function renderCoop(results, goal, barSel, textSel, msgSel) {
+  const stars = results.reduce((s, r) => s + (r.correct || 0), 0);
+  const pct = Math.min(100, Math.round(stars / goal * 100));
+  $(barSel).style.width = pct + '%';
+  $(textSel).textContent = `⭐ ${stars} / ${goal}`;
+  if (msgSel) $(msgSel).textContent = stars >= goal ? '🎉 목표 달성! 우리 반이 은하를 정복했어요!' : `맞힌 문제 하나가 별 하나! 목표까지 ${goal - stars}개 남았어요.`;
+}
+$('#btnReview').onclick = () => { SFX.tap(); startQuiz('review', 'review'); };
+$('#btnBadges').onclick = () => { SFX.tap(); renderBadges(); show('badges'); };
+$('#btnLogout').onclick = () => { me = null; $('#who').textContent = ''; initStart(); show('start'); };
+document.querySelectorAll('[data-go="home"]').forEach(b => b.onclick = goHome);
+$('#btnHome').onclick = () => {
+  if (document.querySelector('#s-quiz.active') && !confirm('탐험을 그만두고 돌아갈까요? 지금까지 푼 기록은 저장되지 않아요.')) return;
+  Q = null; goHome();
+};
+
+/* ===================== ③ 퀴즈 ===================== */
+function startQuiz(unit, mode) {
+  const review = mode === 'review';
+  const pool = review ? shuffle([...me.wrongNote]).slice(0, N_QUESTIONS) : null;
+  Q = {
+    unit, mode, pool, total: review ? pool.length : N_QUESTIONS,
+    idx: 0, level: review ? 0 : 1, maxLevel: 1, upStreak: 0, downStreak: 0,
+    combo: 0, maxCombo: 0, score: 0, correct: 0,
+    skills: {}, wrongs: [], fixed: [], used: new Set(), start: Date.now(), cur: null, locked: false, input: '',
+  };
+  // 로켓 경로 (행성 5개)
+  const marks = ['🌙', '🔴', '🟠', '🪐', '🌟'];
+  $('#track').querySelectorAll('.pl').forEach(e => e.remove());
+  marks.forEach((m, i) => { const s = document.createElement('span'); s.className = 'pl'; s.textContent = m; s.style.left = (6 + 88 * (i + 1) / 5) + '%'; $('#track').appendChild(s); });
+  moveRocket();
+  nextQuestion();
+  show('quiz');
+}
+function moveRocket() {
+  const p = Q.idx / Q.total;
+  $('#rocket').style.left = (6 + 88 * p) + '%';
+  $('#track').querySelectorAll('.pl').forEach((e, i) => e.classList.toggle('lit', p >= (i + 1) / 5 - 1e-9));
+}
+function nextQuestion() {
+  Q.locked = false; Q.input = '';
+  Q.cur = Q.mode === 'review' ? Q.pool[Q.idx] : makeQuestion(Q.unit, Q.level, Q.used);
+  const q = Q.cur;
+  // 숫자 답 문제는 3문제마다 한 번 직접 입력형으로
+  q.inputMode = q.numeric && Q.idx % 3 === 2;
+
+  $('#qCount').textContent = `문제 ${Q.idx + 1} / ${Q.total}`;
+  $('#qLevel').textContent = Q.mode === 'review' ? '📖 오답 노트' : `난이도 ${'●'.repeat(Q.level)}${'○'.repeat(3 - Q.level)}`;
+  $('#qScore').textContent = `⭐ ${Q.score}점`;
+  $('#qType').textContent = `${UNITS[SKILLS[q.skill].unit].emoji} ${SKILLS[q.skill].label}${q.inputMode ? ' · ✍️ 직접 입력' : ''}`;
+  $('#qText').textContent = q.text;
+  $('#qText').classList.toggle('long', !!q.long);
+  $('#feedback').className = 'feedback';
+
+  const area = $('#answerArea');
+  if (q.inputMode) {
+    area.innerHTML = `<div class="keypad-wrap"><div class="ans-box" id="ansBox">&nbsp;</div><div class="keypad">
+      ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="key" data-k="${n}">${n}</button>`).join('')}
+      <button class="key" data-k="back">⌫</button><button class="key" data-k="0">0</button><button class="key ok" data-k="ok">확인</button></div></div>`;
+    area.querySelectorAll('.key').forEach(b => b.onclick = () => keyIn(b.dataset.k));
+  } else {
+    area.innerHTML = `<div class="choices">${q.choices.map((c, i) => `<button class="choice" data-v="${esc(c)}"><span class="k">${i + 1}</span>${esc(c)}</button>`).join('')}</div>`;
+    area.querySelectorAll('.choice').forEach(b => b.onclick = () => answer(b.dataset.v, b));
+  }
+}
+function keyIn(k) {
+  if (Q.locked) return;
+  SFX.tap();
+  if (k === 'back') Q.input = Q.input.slice(0, -1);
+  else if (k === 'ok') { if (Q.input) answer(Q.input); return; }
+  else if (Q.input.length < 5) Q.input += k;
+  $('#ansBox').innerHTML = Q.input || '&nbsp;';
+}
+document.addEventListener('keydown', e => {
+  if (!Q || !document.querySelector('#s-quiz.active')) return;
+  if (Q.locked) { if (e.key === 'Enter' && $('#btnNext')) $('#btnNext').click(); return; }
+  if (Q.cur.inputMode) {
+    if (/^[0-9]$/.test(e.key)) keyIn(e.key);
+    else if (e.key === 'Backspace') keyIn('back');
+    else if (e.key === 'Enter') keyIn('ok');
+  } else if (/^[1-4]$/.test(e.key)) {
+    const b = document.querySelectorAll('.choice')[+e.key - 1]; if (b) b.click();
+  }
+});
+
+function answer(val, btn) {
+  if (Q.locked) return;
+  Q.locked = true;
+  const q = Q.cur, ok = String(val) === String(q.answer);
+  const st = Q.skills[q.skill] || (Q.skills[q.skill] = { c: 0, t: 0 });
+  st.t++;
+
+  // 보기 표시
+  if (q.inputMode) $('#ansBox').classList.add(ok ? 'right' : 'wrong');
+  else document.querySelectorAll('.choice').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.v === String(q.answer)) b.classList.add('right');
+    else if (b === btn) b.classList.add('wrong');
+  });
+
+  const fb = $('#feedback');
+  if (ok) {
+    st.c++; Q.correct++; Q.combo++; Q.maxCombo = Math.max(Q.maxCombo, Q.combo);
+    let gain = 10;
+    if (Q.combo >= 3) { gain += 5; toast(`🔥 불꽃 부스터 x${Q.combo}! +5`); SFX.combo(); } else SFX.ok();
+    Q.score += gain;
+    if (Q.mode === 'review') Q.fixed.push(q.text);
+    // 적응형 난이도: 2연속 정답 → 난이도 UP
+    if (Q.mode !== 'review') {
+      Q.upStreak++; Q.downStreak = 0;
+      if (Q.upStreak >= 2 && Q.level < 3) { Q.level++; Q.upStreak = 0; Q.maxLevel = Math.max(Q.maxLevel, Q.level); setTimeout(() => { toast('⚡ 난이도 UP!'); SFX.up(); }, Q.combo >= 3 ? 900 : 0); }
+    }
+    fb.className = 'feedback show ok';
+    fb.innerHTML = `<b>정답! ⭐ +${gain}</b><div class="muted">${pickOne(['대단해요!', '완벽해요!', '로켓이 날아올라요!', '최고의 대원!', '멋져요!'])}</div>`;
+    $('#qScore').textContent = `⭐ ${Q.score}점`;
+    setTimeout(advance, Q.combo >= 3 ? 1300 : 1000);
+  } else {
+    SFX.bad(); Q.combo = 0;
+    const { inputMode, ...save } = q;
+    if (!Q.wrongs.some(w => w.text === q.text)) Q.wrongs.push(save);
+    // 적응형 난이도: 2연속 오답 → 난이도 DOWN
+    if (Q.mode !== 'review') {
+      Q.downStreak++; Q.upStreak = 0;
+      if (Q.downStreak >= 2 && Q.level > 1) { Q.level--; Q.downStreak = 0; }
+    }
+    const r = $('#rocket'); r.classList.remove('shake'); void r.offsetWidth; r.classList.add('shake');
+    fb.className = 'feedback show bad';
+    fb.innerHTML = `<b>아쉬워요! 정답은 ${esc(q.answer)}</b>
+      <div>${esc(q.explain)}</div>
+      <div class="hint">💡 ${esc(SKILLS[q.skill].hint)}</div>
+      <button class="btn small" id="btnNext" style="margin-top:12px">알겠어요! 다음 →</button>`;
+    $('#btnNext').onclick = () => { SFX.tap(); advance(); };
+  }
+}
+function advance() {
+  if (!Q) return;
+  Q.idx++;
+  moveRocket();
+  if (Q.idx >= Q.total) setTimeout(finishQuiz, 500);
+  else nextQuestion();
+}
+
+/* ===================== ④ 결과 ===================== */
+async function finishQuiz() {
+  const timeSec = Math.round((Date.now() - Q.start) / 1000);
+  const isReview = Q.mode === 'review';
+  const prevBest = me.best[Q.unit];
+
+  // 1) 기록 저장
+  const rec = { id: me.id, grade: 3, cls: me.cls, num: me.num, nick: me.nick, unit: Q.unit,
+    score: Q.score, correct: Q.correct, total: Q.total, timeSec, skills: Q.skills, maxLevel: Q.maxLevel,
+    date: today(), ts: Date.now() };
+  await DB.addResult(rec);
+
+  // 2) 학생 정보 갱신 (최고 기록, 오답 노트, 배지)
+  const newBadges = [];
+  const give = id => { if (!me.badges.includes(id)) { me.badges.push(id); newBadges.push(id); } };
+  me.plays = (me.plays || 0) + 1;
+  give('first');
+  if (!isReview) {
+    if (prevBest == null || Q.score > prevBest) me.best[Q.unit] = Q.score;
+    if (Q.correct >= 7) give(Q.unit);
+    if (Q.correct === Q.total) give('perfect');
+    if (Q.maxLevel >= 3) give('hard');
+  }
+  if (Q.maxCombo >= 5) give('combo5');
+  if (isReview && Q.fixed.length > 0) give('review');
+  // 오답 노트: 맞힌 건 빼고, 새로 틀린 건 추가 (최대 30개)
+  let note = me.wrongNote.filter(w => !Q.fixed.includes(w.text));
+  for (const w of Q.wrongs) if (!note.some(n => n.text === w.text)) note.push(w);
+  me.wrongNote = note.slice(-30);
+
+  // 오늘의 미션 확인
+  const [set, results] = await Promise.all([DB.getClassSettings(me.cls), DB.getResults(me.cls)]);
+  let missionHtml = '';
+  if (set.mission && set.mission.date === today() && set.mission.unit === Q.unit) {
+    const done = results.filter(r => r.id === me.id && r.unit === Q.unit && r.date === today()).length;
+    if (done >= set.mission.count) { give('mission'); missionHtml = `<div class="compare" style="margin-top:10px;background:rgba(95,224,138,.15)">🎯 오늘의 미션 완료! (${set.mission.count}/${set.mission.count})</div>`; }
+    else missionHtml = `<div class="compare" style="margin-top:10px">🎯 오늘의 미션: ${done} / ${set.mission.count} — ${set.mission.count - done}번 더!</div>`;
+  }
+  await DB.saveStudent(me);
+
+  // 3) 화면 그리기
+  const tt = rankTitle(Q.score);
+  const u = UNITS[Q.unit];
+  $('#rEmoji').textContent = Q.correct === Q.total ? '🏆' : tt.e;
+  $('#rTitle').textContent = isReview ? '오답 노트 복습 완료!' : `${tt.t} 등급!`;
+  $('#rSub').textContent = isReview ? `다시 맞힌 문제 ${Q.fixed.length}개는 오답 노트에서 빠졌어요.` : `${u.emoji} ${u.planet} 행성(${u.name}) 탐험 완료`;
+  $('#rScore').textContent = Q.score;
+  $('#rCorrect').textContent = `${Q.correct}/${Q.total}`;
+  $('#rTime').textContent = fmtSec(timeSec);
+
+  let cmp;
+  if (isReview) cmp = `📖 남은 오답 노트 문제: ${me.wrongNote.length}개`;
+  else if (prevBest == null) cmp = '🚀 첫 탐험 기록이에요! 다음엔 이 기록을 넘어 볼까요?';
+  else if (Q.score > prevBest) cmp = `🎉 개인 최고 기록 갱신! 지난 최고보다 +${Q.score - prevBest}점`;
+  else if (Q.score === prevBest) cmp = `👏 개인 최고 기록(${prevBest}점)과 같아요!`;
+  else cmp = `💪 개인 최고 기록(${prevBest}점)까지 ${prevBest - Q.score}점 남았어요!`;
+  $('#rCompare').textContent = cmp;
+
+  $('#rBadges').innerHTML = newBadges.length ? `<h3 class="center" style="margin-top:14px">새 배지 획득!</h3><div class="newbadges">${newBadges.map(id => { const b = BADGES.find(x => x.id === id); return `<span class="nb">${b.e} ${b.n}</span>`; }).join('')}</div>` : '';
+  $('#rMission').innerHTML = missionHtml;
+
+  renderCoop(results, set.goal, '#rCoopBar', '#rCoopText');
+
+  // 명예의 전당 (반 · 단원별, 학생당 최고 기록 1개)
+  if (isReview) $('#rRankCard').style.display = 'none';
+  else {
+    $('#rRankCard').style.display = '';
+    $('#rRankTitle').textContent = `🏆 ${me.cls}반 명예의 전당 — ${u.emoji} ${u.planet}`;
+    const best = {};
+    for (const r of results.filter(r => r.unit === Q.unit)) {
+      const b = best[r.id];
+      if (!b || r.score > b.score || (r.score === b.score && r.timeSec < b.timeSec)) best[r.id] = r;
+    }
+    const top = Object.values(best).sort((a, b) => b.score - a.score || a.timeSec - b.timeSec).slice(0, 10);
+    const medals = ['🥇', '🥈', '🥉'];
+    $('#rRank').innerHTML = top.map((r, i) => `<tr class="${r.id === me.id ? 'me' : ''}"><td class="medal">${medals[i] || i + 1}</td><td>${r.num}번 ${esc(r.nick || '')}</td><td>${r.score}점</td><td>${fmtSec(r.timeSec)}</td></tr>`).join('')
+      || '<tr><td colspan="4" class="muted">아직 기록이 없어요</td></tr>';
+  }
+
+  $('#btnRetry').textContent = isReview ? '📖 다시 복습' : '🔁 다시 도전';
+  $('#btnRetry').disabled = isReview && me.wrongNote.length === 0;
+  $('#btnRetry').onclick = () => { SFX.tap(); startQuiz(Q.unit, Q.mode); };
+
+  show('result');
+  if (Q.correct >= Q.total * 0.7) { SFX.win(); fireworks(Q.correct === Q.total ? 10 : 6); }
+}
+$('#btnToHome').onclick = goHome;
+
+/* ===================== 배지 도감 ===================== */
+function renderBadges() {
+  const got = new Set(me.badges);
+  $('#badgeCount').textContent = `${got.size}개 / ${BADGES.length}개 모았어요!`;
+  $('#badgeList').innerHTML = BADGES.map(b => `<div class="badge ${got.has(b.id) ? 'got' : 'locked'}"><div class="e">${b.e}</div><div class="n">${got.has(b.id) ? b.n : '???'}</div><div class="d">${b.d}</div></div>`).join('');
+}
+
+/* ===================== 선생님 화면 ===================== */
+$('#btnTeacher').onclick = () => { $('#pinInput').value = ''; $('#pinErr').textContent = ''; $('#pinModal').classList.add('show'); setTimeout(() => $('#pinInput').focus(), 50); };
+$('#pinCancel').onclick = () => $('#pinModal').classList.remove('show');
+$('#pinInput').onkeydown = e => { if (e.key === 'Enter') $('#pinOk').click(); };
+$('#pinOk').onclick = async () => {
+  if ($('#pinInput').value === await DB.getPin()) { $('#pinModal').classList.remove('show'); openTeacher(); }
+  else $('#pinErr').textContent = '비밀번호가 달라요.';
+};
+function openTeacher() {
+  fillSelect($('#tClass'), 1, 10, '반', $('#tClass').value || 1);
+  $('#tMUnit').innerHTML = '<option value="">미션 없음</option>' + Object.entries(UNITS).map(([k, u]) => `<option value="${k}">${u.emoji} ${u.planet} (${u.name})</option>`).join('');
+  renderTeacher();
+  show('teacher');
+}
+$('#tClass').onchange = renderTeacher;
+const pct = (c, t) => t ? Math.round(c / t * 100) : 0;
+function hbar(label, c, t, cls = '') {
+  const p = pct(c, t);
+  return `<div class="hbar"><span>${label}</span><div class="bar ${cls}"><i style="width:${p}%"></i></div><span class="jua">${p}%</span></div>`;
+}
+async function renderTeacher() {
+  const cls = +$('#tClass').value;
+  const [results, students, set] = await Promise.all([DB.getResults(cls), DB.getStudents(cls), DB.getClassSettings(cls)]);
+
+  // 유형별 합계
+  const sk = {};
+  for (const r of results) for (const [k, v] of Object.entries(r.skills || {})) { const s = sk[k] || (sk[k] = { c: 0, t: 0 }); s.c += v.c; s.t += v.t; }
+  const totalC = results.reduce((s, r) => s + r.correct, 0), totalT = results.reduce((s, r) => s + r.total, 0);
+  $('#tStudents').textContent = new Set(results.map(r => r.id)).size;
+  $('#tPlays').textContent = results.length;
+  $('#tAcc').textContent = pct(totalC, totalT) + '%';
+
+  // 단원별 정답률 (섞어서 문제도 원래 단원으로 합산)
+  const un = {};
+  for (const [k, v] of Object.entries(sk)) { const u = SKILLS[k].unit; const s = un[u] || (un[u] = { c: 0, t: 0 }); s.c += v.c; s.t += v.t; }
+  $('#tUnits').innerHTML = ['add', 'div', 'mul', 'time'].map(u => hbar(`${UNITS[u].emoji} ${UNITS[u].name}`, un[u]?.c || 0, un[u]?.t || 0, 'blue') + `<div class="notice" style="margin:-6px 0 4px 158px">${un[u]?.t || 0}문제 풀이</div>`).join('');
+
+  // 오답률 높은 유형
+  const weak = Object.entries(sk).filter(([, v]) => v.t >= 3).map(([k, v]) => ({ k, err: v.t - v.c, t: v.t })).sort((a, b) => b.err / b.t - a.err / a.t);
+  $('#tSkills').innerHTML = weak.length ? weak.map(w => hbar(SKILLS[w.k].label, w.err, w.t, 'red')).join('') : '<p class="muted">아직 데이터가 부족해요.</p>';
+
+  // 학생별 현황
+  const byId = {};
+  for (const r of results) (byId[r.id] || (byId[r.id] = [])).push(r);
+  const rows = Object.entries(byId).map(([id, rs]) => {
+    const c = rs.reduce((s, r) => s + r.correct, 0), t = rs.reduce((s, r) => s + r.total, 0);
+    const ss = {}; for (const r of rs) for (const [k, v] of Object.entries(r.skills || {})) { const s = ss[k] || (ss[k] = { c: 0, t: 0 }); s.c += v.c; s.t += v.t; }
+    const w = Object.entries(ss).filter(([, v]) => v.t - v.c > 0).sort((a, b) => (b[1].t - b[1].c) / b[1].t - (a[1].t - a[1].c) / a[1].t)[0];
+    const stu = students.find(s => s.id === id);
+    return { num: rs[0].num, nick: stu?.nick || rs[0].nick || '', plays: rs.length, acc: pct(c, t), best: Math.max(...rs.map(r => r.score)), weak: w ? SKILLS[w[0]].label : '-' };
+  }).sort((a, b) => a.num - b.num);
+  $('#tStudentRows').innerHTML = rows.length ? rows.map(r => `<tr><td>${r.num}번</td><td>${esc(r.nick)}</td><td>${r.plays}회</td><td>${r.acc}%</td><td>${r.best}점</td><td>${r.weak === '-' ? '-' : `<span class="pill">${r.weak}</span>`}</td></tr>`).join('')
+    : '<tr><td colspan="6" class="muted">아직 탐험한 학생이 없어요.</td></tr>';
+
+  // 설정 값 채우기
+  const m = set.mission && set.mission.date === today() ? set.mission : null;
+  $('#tMUnit').value = m ? m.unit : '';
+  $('#tMCount').value = m ? m.count : 2;
+  $('#tGoal').value = set.goal;
+  $('#tSaved').textContent = '';
+}
+$('#btnSaveSettings').onclick = async () => {
+  const cls = +$('#tClass').value;
+  const unit = $('#tMUnit').value;
+  const count = Math.max(1, Math.min(10, +$('#tMCount').value || 1));
+  const goal = Math.max(10, +$('#tGoal').value || 300);
+  await DB.saveClassSettings(cls, { goal, mission: unit ? { unit, count, date: today() } : null });
+  $('#tSaved').textContent = `✅ ${cls}반 설정을 저장했어요. (미션은 오늘 하루 동안 보여요)`;
+};
+$('#btnPin').onclick = async () => {
+  const p = $('#tPin').value;
+  if (!/^\d{4}$/.test(p)) return alert('숫자 4자리로 입력해 주세요.');
+  await DB.setPin(p); $('#tPin').value = ''; alert('비밀번호를 바꿨어요.');
+};
+$('#btnReset').onclick = async () => {
+  const cls = +$('#tClass').value;
+  if (!confirm(`${cls}반의 탐험 기록과 학생 배지·오답 노트를 모두 지울까요?\n지운 기록은 되살릴 수 없어요.`)) return;
+  await DB.resetClass(cls); renderTeacher();
+};
+$('#btnTeacherExit').onclick = () => { initStart(); show('start'); };
+
+// ---------- 시작 ----------
+$('#btnSound').onclick = () => { soundOn = !soundOn; try { localStorage.setItem('msq_sound', soundOn ? 'on' : 'off'); } catch {} renderSound(); SFX.tap(); };
+addEventListener('resize', sizeCanvas);
+sizeCanvas(); renderSound(); initStart();
+$('#dbMode').textContent = USE_FIREBASE ? '☁️ 온라인 저장' : '💾 이 기기에만 저장';
+$('#dbMode').classList.toggle('on', USE_FIREBASE);
+$('#dbMode').title = USE_FIREBASE ? 'Firebase에 기록이 저장돼요' : 'Firebase 설정 전이라 이 브라우저에만 저장돼요';
+if (USE_FIREBASE) fsReady().catch(showDbError);
+// Firebase 사용 시: 비밀번호 변경·기록 삭제는 보안 규칙으로 막혀 있으므로 콘솔 안내로 대체
+$('#tFbAdmin').style.display = USE_FIREBASE ? '' : 'none';
+$('#tLocalAdmin').style.display = USE_FIREBASE ? 'none' : '';
+</script>
+</body>
+</html>

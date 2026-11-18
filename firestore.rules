@@ -1,0 +1,81 @@
+rules_version = '2';
+
+// 수학 우주 탐험대 — Firestore 보안 규칙
+// Firebase 콘솔 > Firestore Database > 규칙 탭에 전체를 붙여 넣고 [게시]를 누르세요.
+// 원칙: 이 웹앱이 쓰는 4개 컬렉션만, 정해진 모양의 데이터만 허용하고 삭제는 막는다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- 탐험 기록: 읽기·새로 쓰기만 가능 (고치기·지우기 금지) ----------
+    match /results/{resultId} {
+      allow read: if true;
+      allow create: if validResult(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // ---------- 학생 정보: 읽기·쓰기 가능, 지우기 금지 ----------
+    match /students/{studentId} {
+      allow read: if true;
+      allow create, update: if validStudent(request.resource.data, studentId);
+      allow delete: if false;
+    }
+
+    // ---------- 반 설정(협동 목표, 오늘의 미션) ----------
+    match /classes/{classId} {
+      allow read: if true;
+      allow create, update: if validClass(request.resource.data);
+      allow delete: if false;
+    }
+
+    // ---------- 선생님 비밀번호: 앱에서는 읽기만 (변경은 콘솔에서) ----------
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // 위에 없는 컬렉션은 모두 차단 (규칙이 없으면 기본으로 거부됨)
+
+    // ================= 검사 함수 =================
+    function validClassNum(d) {
+      return d.cls is int && d.cls >= 1 && d.cls <= 10
+          && d.num is int && d.num >= 1 && d.num <= 30;
+    }
+
+    function validResult(d) {
+      return d.keys().hasOnly(['id','grade','cls','num','nick','unit','score','correct','total','timeSec','skills','maxLevel','date','ts'])
+          && validClassNum(d)
+          && d.id == '3-' + string(d.cls) + '-' + string(d.num)
+          && d.nick is string && d.nick.size() <= 8
+          && d.unit in ['add','div','mul','time','mix','review']
+          && d.total is int && d.total >= 1 && d.total <= 10
+          && d.correct is int && d.correct >= 0 && d.correct <= d.total
+          && d.score is int && d.score >= 0 && d.score <= 150
+          && d.timeSec is int && d.timeSec >= 0 && d.timeSec <= 86400
+          && d.skills is map && d.skills.size() <= 20
+          && d.maxLevel is int && d.maxLevel >= 1 && d.maxLevel <= 3
+          && d.date is string && d.date.size() == 10
+          && d.ts is int;
+    }
+
+    function validStudent(d, studentId) {
+      return d.keys().hasOnly(['id','grade','cls','num','nick','badges','best','wrongNote','plays'])
+          && validClassNum(d)
+          && d.id == studentId
+          && studentId == '3-' + string(d.cls) + '-' + string(d.num)
+          && d.nick is string && d.nick.size() <= 8
+          && d.badges is list && d.badges.size() <= 20
+          && d.best is map && d.best.size() <= 6
+          && d.wrongNote is list && d.wrongNote.size() <= 30
+          && d.plays is int && d.plays >= 0;
+    }
+
+    function validClass(d) {
+      return d.keys().hasOnly(['goal','mission'])
+          && d.goal is int && d.goal >= 10 && d.goal <= 100000
+          && (d.mission == null || (d.mission is map
+              && d.mission.keys().hasOnly(['unit','count','date'])
+              && d.mission.unit in ['add','div','mul','time','mix']
+              && d.mission.count is int && d.mission.count >= 1 && d.mission.count <= 10));
+    }
+  }
+}
