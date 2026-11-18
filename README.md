@@ -2,7 +2,7 @@
 
 초등 3학년 수학 퀴즈 웹앱입니다. 문제를 맞힐 때마다 로켓이 행성을 지나 우주를 탐험해요.
 
-**▶ 바로 실행:** https://spyoppa1-tech.github.io/math-space-quiz/
+**▶ 바로 실행:** https://sweetdreams10-glitch.github.io/homework/
 
 ## 무엇을, 누구를 위해
 - **대상:** 초등 3학년 학생과 담임 교사
